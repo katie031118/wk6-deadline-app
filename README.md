@@ -39,7 +39,7 @@
 ## 실패한 시도
 - 환승·도착 임박을 별도 화면(`transferSoon`, `arrivalSoon`)으로 두었으나, 독서 화면은 그대로 두고 Dynamic Island 상태만 바뀌게 합쳤음
 - 모바일 화면에서 하단 버튼이 화면 밖으로 밀려서, 높이를 늘리는 방식 대신 전체를 같은 비율로 줄여 맞추는 방식으로 변경
-- GitHub 저장소로 push하려 했으나 인증 문제로 막혀서, 이번 배포는 Vercel CLI로 `experiments/claude` 폴더를 직접 올렸음. Vercel 프로젝트는 이 GitHub 저장소와 연결되어 있지 않음
+- GitHub 저장소로 push하려 했으나 인증 문제로 막혀서, 처음 배포는 Vercel CLI로 `experiments/claude` 폴더를 직접 올렸음. 이후 GitHub CLI 브라우저 로그인으로 push에 성공했고, Vercel 프로젝트를 이 저장소(Root Directory `experiments/claude`, `main` 브랜치)에 연결해 이후 push는 자동 배포됨
 
 ## 남은 한계
 - 위치·환승·탑승·도착 감지와 밀리의 서재 앱 실행은 구현하지 않고 시뮬레이션함. 환승 3/2/1분과 도착 시간은 시연용으로 압축한 시간
