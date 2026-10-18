@@ -351,7 +351,7 @@
   /* 환승 직전: jump the island to "곧 환승해요" on the reading screen. Any leftover toast is cleared so no contradicting message stays. */
   A['sim-transfer'] = function () {
     if (!state.journeyStarted) prepareJourney();
-    App.hideToast(); state.readerTarget = 'transfer'; state.readerPhase = 'soon'; state.islandExpanded = false;
+    App.hideToast(); state.readerTarget = 'transfer'; state.readerPhase = '1'; state.islandExpanded = false; // the Figma "다음 역에서 환승해요" state
     if (onReader()) { App.save(); App.render(); App.restartReaderClock(); } else App.go('millie');
     App.wbLog('환승 직전');
   };
