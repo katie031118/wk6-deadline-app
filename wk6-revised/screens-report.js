@@ -83,11 +83,11 @@
 
   /* ---------- end ---------- */
   S.end = function () {
-    var r = state.lastSummary || App.buildSummary();
-    return '<section class="fx end-screen">' + U.back('home') + '<span class="check-circle check-large"><svg width="39" height="39" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M9 21l8 8 14-17" stroke="#1c1b1f" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-      '<div class="end-copy"><h2>오늘 활동을<br>마무리했어요!</h2><p>' + (pageOf(r) ? pageOf(r) + '까지 읽은 기록이 저장되었어요.' : '이번 활동이 기록되었어요.') + '<br>다음 이동에서도 원하는 방식으로<br>시간을 활용해보세요.</p></div>' +
+    var r = state.lastSummary || App.buildSummary('arrival');
+    return '<section class="fx end-screen">' + U.back('end-home') + '<span class="check-circle check-large"><svg width="39" height="39" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M9 21l8 8 14-17" stroke="#1c1b1f" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+      '<div class="end-copy"><h2>오늘 이동을<br>마무리했어요!</h2><p>이번 이동에서의 활동이 기록되었어요.<br>다음 이동에서도 원하는 방식으로<br>시간을 활용해보세요.</p></div>' +
       '<div class="book-card end-card">' + U.logo(62) + '<div><small>' + esc(activityLabelFor(r)) + '</small><strong>' + esc(r.contentTitle || U.contentTitle()) + '</strong>' + (pageOf(r) ? '<small>' + pageOf(r) + '</small>' : '') + '</div><b>' + Number(r.minutes || 0) + '분</b></div>' +
-      U.actions('홈으로', 'home', '기록보기', 'open-calendar') + '</section>';
+      U.actions('기록 남기기', 'end-to-record', '홈으로', 'end-home') + '</section>';
   };
 
   /* ---------- actions ---------- */
@@ -95,6 +95,13 @@
     state.journeyStarted = false; state.transferHandled = false; state.transferStopped = false; state.resumePending = false; state.islandExpanded = false; state.elapsed = 0;
     App.syncFlags(); if (saved) state.hasPreviousActivity = true;
   }
+  /* The one place a trip's record is saved: from the record screen (with rating / photo) or from "홈으로" on the wrap-up screen (without). */
+  App.commitRecord = function (extra) {
+    var sum = state.lastSummary || App.buildSummary('arrival'), book = U.isBook(sum.activity);
+    var r = Object.assign({}, sum, { rating: null, resumeCount: Number(state.resumeCount || 0), photo: state.photo || '', note: state.onTripNote || '', endPage: book ? U.page() : null, progress: '' }, extra || {});
+    state.records.unshift(r); state.records = state.records.slice(0, 100); state.lastSummary = r;
+    finishJourney(true); return r;
+  };
   A.rate = function (t) { state.satisfaction = Number(t.dataset.value); App.save(); App.render(); };
   A['open-photo-sheet'] = function () { state.recordPhotoOpen = true; state.recordPhotoSheet = !state.photo; App.save(); App.render(); };
   A['close-photo-sheet'] = function () { state.recordPhotoSheet = false; if (!state.photo) state.recordPhotoOpen = false; App.save(); App.render(); };
@@ -104,10 +111,13 @@
     var sum = state.lastSummary || App.buildSummary('arrival'), input = (state.endPositionInput || '').trim(), book = U.isBook(sum.activity);
     if (book && input !== '' && !(parseInt(input, 10) > 0)) { App.toast('읽은 쪽수를 숫자로 입력해 주세요.'); return; }
     if (book && input !== '') state.currentReadingPage = String(parseInt(input, 10));
-    var r = Object.assign({}, sum, { rating: state.satisfaction || null, resumeCount: Number(state.resumeCount || 0), photo: state.photo || '', note: state.onTripNote || '', endPage: book ? U.page() : null, progress: book ? '' : input });
-    state.records.unshift(r); state.records = state.records.slice(0, 100); state.lastSummary = r;
-    finishJourney(true); state.screen = 'result'; App.save(); App.render(); App.toast('기록을 저장했어요.');
+    App.commitRecord({ rating: state.satisfaction || null, endPage: book ? U.page() : null, progress: book ? '' : input });
+    state.screen = 'result'; App.save(); App.render(); App.toast('기록을 저장했어요.');
   };
+  /* 마무리했어요 → 기록 남기기: the page is pre-filled with the saved reading position */
+  A['end-to-record'] = function () { state.endPositionInput = U.isBook(state.journeyActivity) && U.page() ? String(U.page()) : ''; state.recordPhotoOpen = false; state.recordPhotoSheet = false; App.go('record'); };
+  /* 마무리했어요 → 홈으로: the activity is still saved (without rating/photo) so no trip is lost */
+  A['end-home'] = function () { if (state.journeyStarted) App.commitRecord(); state.editingActivities = false; App.go('home'); };
   A['open-calendar'] = function () { state.selectedDate = (state.lastSummary && state.lastSummary.dateKey) || App.SIM_TODAY; App.go('calendar'); };
   A['pick-date'] = function (t) { state.selectedDate = t.dataset.value; App.save(); App.render(); };
   A['week-prev'] = function () { state.selectedDate = U.shiftDate(state.selectedDate || App.SIM_TODAY, -7); App.save(); App.render(); };
@@ -117,7 +127,7 @@
     var page = r.endPage ? r.endPage + '쪽' : (r.progress || '');
     App.openModal(U.activityLabel(r.activity), '', '<div class="modal-list"><p class="sheet-copy">' + esc(r.departure) + ' → ' + esc(r.destination) + '<br>이동 ' + esc(r.startTime || '') + ' → ' + esc(r.endTime || '') + ' (' + esc(r.totalMinutes || 0) + '분) · 활동 ' + esc(r.minutes || 0) + '분</p><p class="sheet-copy">' + esc(r.contentTitle || '') + (page ? ' · 마지막 읽은 위치 ' + esc(page) : '') + '</p><p class="sheet-copy">원하던 방식 · ' + (r.rating ? esc(RATING_LABELS[r.rating]) + ' (' + esc(r.rating) + '/5)' : '—') + '</p>' + (r.note ? '<p class="sheet-copy">메모 · ' + esc(r.note) + '</p>' : '') + '</div><div class="sheet-actions">' + U.btn('닫기', 'close-modal', 'btn btn-secondary') + '</div>');
   };
-  A.home = function () { state.editingActivities = false; if (state.screen === 'end' || state.screen === 'result') finishJourney(false); App.go('home'); };
+  A.home = function () { state.editingActivities = false; if (state.screen === 'result') finishJourney(false); App.go('home'); };
   A['edit-activities'] = function () { state.editingActivities = true; App.go('activities'); };
   A['open-account'] = function () {
     App.openModal('계정 정보', '로컬 프로토타입 계정 정보입니다.', '<div class="modal-list"><p class="sheet-copy"><strong>' + esc(state.account.nickname || '사용자') + '</strong><br>' + esc(state.account.email || '이메일 미등록') + '</p></div><div class="sheet-actions">' + U.btn('확인', 'close-modal', 'btn btn-primary') + '</div>');

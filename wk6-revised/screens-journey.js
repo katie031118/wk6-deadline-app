@@ -151,27 +151,45 @@
   S.arrivalNotice = function () {
     return '<section class="fx reader">' + readerBody() + '</section>';
   };
-  /* Island content for the current reader phase, counted in stops (not minutes). phases: active → 3 → 2 → 1 → soon; target: transfer | destination. */
+  /* ---- Dynamic Island: built from the Figma "수정해야하는 프로토타입 화면들" frames ----
+     active      → compact pill 246×36 "● 활동 중 ………… 12분 34초"
+     3 / 2 stops → compact pill with train icon "환승 ………… 3정거장 전"
+     1 / soon    → wide banner 362×62 "다음 역에서 환승해요 / 한 정거장 남았어요 · 읽던 위치 저장" + sheet with the save-and-pause button
+     expanded    → Live Activity 362×144 (tap the pill) */
+  App.islandElapsed = function () {
+    var secs = Math.floor((Date.now() - (App.islandT0 || Date.now())) / 1000) % 60;
+    return U.activityMinutesNow() + '분 ' + secs + '초';
+  };
   App.islandModel = function () {
-    var dest = state.readerTarget === 'destination', ph = state.readerPhase || 'active', n = Number(ph);
-    var m = { minutes: U.activityMinutesNow(), dest: dest, icon: '', time: '' };
-    if (ph === 'active') { m.label = '활동 중'; m.time = m.minutes + '분'; m.remain = (dest ? '도착' : '환승') + '까지 4정거장'; }
-    else if (ph === 'soon') { m.label = dest ? '곧 도착해요' : '곧 환승해요'; m.icon = dest ? 'location' : 'train'; m.remain = dest ? '곧 도착해요 · 이번 역에서 내려요' : '곧 환승해요 · 이번 역에서 내려요'; }
-    else if (ph === '1') { m.label = dest ? '다음 역에서 내려요' : '다음 역에서 환승해요'; m.remain = '한 정거장 남았어요'; }
-    else { m.label = (dest ? '도착 ' : '환승 ') + n + '정거장 전'; m.remain = (dest ? '도착' : '환승') + '까지 ' + n + '정거장'; }
+    var dest = state.readerTarget === 'destination', ph = state.readerPhase || 'active', n = Number(ph), noun = dest ? '하차' : '환승';
+    var m = { dest: dest, phase: ph };
+    if (ph === 'active') { m.kind = 'pill'; m.left = '활동 중'; m.right = App.islandElapsed(); m.timeRight = true; m.stops = '4정거장 남았습니다.'; }
+    else if (ph === '3' || ph === '2') { m.kind = 'pill'; m.left = noun; m.right = n + '정거장 전'; m.icon = 'train'; m.stops = n + '정거장 남았습니다.'; }
+    else if (ph === '1') { m.kind = 'banner'; m.title = dest ? '다음 역에서 내려요' : '다음 역에서 환승해요'; m.sub = dest ? '한 정거장 남았어요' : '한 정거장 남았어요 · 읽던 위치 저장'; m.stops = '1정거장 남았습니다.'; }
+    else { m.kind = 'banner'; m.title = dest ? '곧 도착해요' : '곧 환승해요'; m.sub = dest ? '곧 목적지에 도착해요' : '곧 환승해요 · 읽던 위치 저장'; m.stops = dest ? '곧 도착합니다.' : '곧 환승합니다.'; }
     return m;
   };
   function pill(m) {
-    return '<button type="button" class="isl-pill" data-action="toggle-island" aria-label="' + esc(m.label) + ' — 활동 상태 펼치기"><span class="isl-dot">' + (m.icon ? icon('island', m.icon, 14, 14) : '') + '</span><span class="isl-label">' + esc(m.label) + '</span>' + (m.time ? '<time>' + m.time + '</time>' : '') + '</button>';
+    return '<button type="button" class="isl-pill" data-action="toggle-island" aria-label="' + esc(m.left + ' ' + m.right) + ' — 활동 상태 펼치기"><span class="isl-left"><span class="isl-dot' + (m.icon ? ' has-icon' : '') + '">' + (m.icon ? icon('island', m.icon, 14, 14) : '') + '</span><span class="isl-label">' + esc(m.left) + '</span></span><span class="isl-right' + (m.timeRight ? ' isl-time' : '') + '">' + esc(m.right) + '</span></button>';
   }
-  /* The stop control carries its own label — the ■ alone was not understood by test participants. */
+  function transferBanner(m) {
+    return '<div class="isl-banner" role="status"><span class="isl-banner-ico">' + icon('island', 'train', 24, 24) + '</span><strong>' + esc(m.title) + '</strong><small>' + esc(m.sub) + '</small></div>';
+  }
+  /* Live Activity (expanded). The ■ stop button is the Figma control: a white 48px circle with a black square. */
   function expandedIsland(m) {
-    return '<div class="isl-backdrop" data-action="collapse-island" aria-hidden="true"></div><div class="isl-live"><div class="isl-live-top"><i></i><span>활동 중</span></div>' + U.logo(56, 'isl-logo') +
-      '<strong>전자책 읽기</strong><small>' + esc(U.contentTitle()) + ' · ' + m.minutes + '분째</small><small class="isl-remain">' + esc(m.remain) + '</small><button type="button" class="isl-stop" data-action="return-from-reader" aria-label="읽은 위치 기록하고 활동 멈추기"><b></b><span>읽은 위치 기록</span></button></div>';
+    var label = U.isBook(state.journeyActivity) ? '전자책' : U.activityLabel(state.journeyActivity);
+    return '<div class="isl-backdrop" data-action="collapse-island" aria-hidden="true"></div><div class="isl-live"><div class="isl-live-top"><i></i><span>활동 중</span><time class="isl-time">' + esc(App.islandElapsed()) + '</time></div>' + U.logo(56, 'isl-logo') +
+      '<strong>' + esc(label + ' · ' + U.contentTitle() + (U.isBook(state.journeyActivity) ? ' 읽기' : '')) + '</strong><small>' + esc(m.stops) + '</small><button type="button" class="isl-stop" data-action="return-from-reader" aria-label="읽은 위치 기록하고 활동 멈추기"><b></b></button></div>';
   }
   IS.millie = IS.resume = function () {
     if (state.screen === 'resume' && state.resumePending) return '';
-    var m = App.islandModel(); return state.islandExpanded ? expandedIsland(m) : pill(m);
+    var m = App.islandModel(); return state.islandExpanded ? expandedIsland(m) : (m.kind === 'banner' ? transferBanner(m) : pill(m));
+  };
+  /* "다음 역에서 환승해요. 읽던 위치를 저장하고 잠시 멈출까요?" — shown with the transfer banner (before the transfer only). */
+  SH.millie = function () {
+    var m = App.islandModel();
+    if (state.islandExpanded || m.kind !== 'banner' || m.dest) return '';
+    return '<section class="isl-sheet" role="dialog" aria-label="환승 안내"><h3>' + (m.phase === 'soon' ? '곧 환승해요.' : '다음 역에서 환승해요.') + '</h3><p>읽던 위치를 저장하고 잠시 멈출까요?</p>' + U.btn('읽은 위치 저장하고 잠시 멈추기', 'return-from-reader', 'btn btn-primary') + '</section>';
   };
   function banner(action, title, body) {
     return '<button type="button" class="notif" data-action="' + action + '">' + U.logo(40) + '<span><span class="notif-head"><b>' + esc(U.bookService()) + '</b><time>지금</time></span><strong>' + title + '</strong><span class="notif-body">' + body + '</span></span></button>';
@@ -219,7 +237,7 @@
     var r = state.lastSummary || App.buildSummary('arrival'), area = U.destAddress(), book = U.isBook(state.journeyActivity);
     return '<section class="fx arrival-screen">' + U.back() + '<span class="check-circle check-small"><svg width="25" height="25" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M9 21l8 8 14-17" stroke="#1c1b1f" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><h2 class="arrival-title">도착했어요!</h2><p class="arrival-desc">' + (area ? esc(area) + '에' : '목적지에') + ' 도착했어요.</p>' +
       '<div class="book-card book-card-compact">' + U.logo(62) + '<div><small>' + U.activityLabel(state.journeyActivity) + '</small><strong>' + esc(U.contentTitle()) + '</strong>' + (book && U.page() ? '<small>마지막 읽은 위치 · ' + U.pageText() + '</small>' : '') + '</div></div>' +
-      '<dl class="arrival-facts"><div><dt>이동 시간</dt><dd>' + esc(r.startTime) + ' → ' + esc(r.endTime) + ' (' + r.totalMinutes + '분)</dd></div><div><dt>활동 시간</dt><dd>' + r.minutes + '분</dd></div><div><dt>이어 읽은 횟수</dt><dd>' + Number(state.resumeCount || 0) + '회</dd></div></dl></section>';
+      '<dl class="arrival-facts"><div><dt>활동 진행 시간</dt><dd>' + r.minutes + '분</dd></div><div><dt>최근 활동 시각</dt><dd>' + esc(U.fmtAmPm(r.endMin)) + '</dd></div><div><dt>활동 재개 (이어간 횟수)</dt><dd>' + Number(state.resumeCount || 0) + '회</dd></div></dl></section>';
   };
   SH.arrival = function () {
     return U.sheet('<div class="sheet-actions">' + U.btn('이동 마무리하기', 'to-record-method', 'btn btn-primary') + U.btn('도착 후에도 계속하기', 'continue-after-arrival', 'btn btn-text') + '</div>', { dim: false, label: '도착', cls: 'sheet-footer' });
@@ -315,19 +333,16 @@
   A['continue-after-transfer'] = function () { App.resumeReading(); };
   A['start-now-from-transfer'] = function () { App.resumeReading(); };
   A['start-resume'] = function () { state.resumePending = false; App.save(); App.render(); App.restartReaderClock(); };
-  /* "활동 그만하기": ends the reading ACTIVITY (not the trip home). What was read so far is saved, so the end screen's "기록되었어요" is true. */
+  /* "활동 그만하기" / 이용 종료: ends the reading ACTIVITY (not the trip home). It leads to the same wrap-up as arriving:
+     마무리했어요 → 오늘의 기록 → 결과 → 홈. Nothing is saved until the record step is finished (or "홈으로" is chosen on the wrap-up screen). */
   App.endJourney = function () {
-    if (state.journeyStarted) {
-      var sum = App.buildSummary();
-      var r = Object.assign({}, sum, { rating: null, photo: state.photo || '', note: state.onTripNote || '' });
-      state.records.unshift(r); state.records = state.records.slice(0, 100); state.lastSummary = r;
-      state.journeyStarted = false; state.transferHandled = false; state.islandExpanded = false; state.resumePending = false; state.elapsed = 0;
-    } else if (!state.lastSummary) { App.toast('진행 중인 이동이 없어요.'); return; }
-    App.syncFlags(); App.go('end');
+    if (!state.journeyStarted) { App.toast('진행 중인 이동이 없어요.'); return; }
+    App.buildSummary(); state.islandExpanded = false; App.go('end');
   };
   A['stop-waiting'] = function () { App.endJourney(); };
   A['show-arrival-summary'] = function () { App.buildSummary('arrival'); App.go('arrival'); };
-  A['to-record-method'] = function () { if (!state.lastSummary) App.buildSummary('arrival'); state.endPositionInput = U.isBook(state.journeyActivity) && U.page() ? String(U.page()) : ''; state.recordPhotoOpen = false; state.recordPhotoSheet = false; App.go('record'); };
+  /* 도착 → "이동 마무리하기" → "오늘 이동을 마무리했어요!" (the record screen follows from there) */
+  A['to-record-method'] = function () { if (!state.lastSummary) App.buildSummary('arrival'); App.go('end'); };
   A['continue-after-arrival'] = function () { state.elapsed = Number(state.elapsed || 0) + 10; App.resumeReading(); };
   A['resume-journey'] = function () { App.go('resume'); };
 

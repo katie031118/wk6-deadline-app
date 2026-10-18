@@ -195,10 +195,12 @@
   U.tripTotal = function () { return U.routeMin() + Number(state.elapsed || 0); };
   U.fmt = function (min) { min = ((min % 1440) + 1440) % 1440; return U.pad2(Math.floor(min / 60)) + ':' + U.pad2(min % 60); };
   U.fmtClock = function (min) { min = ((min % 1440) + 1440) % 1440; return Math.floor(min / 60) + ':' + U.pad2(min % 60); };
+  U.fmtAmPm = function (min) { min = ((min % 1440) + 1440) % 1440; var h = Math.floor(min / 60); return U.pad2(h % 12 || 12) + ':' + U.pad2(min % 60) + (h < 12 ? ' AM' : ' PM'); };
   U.fmtKo = function (min) { min = ((min % 1440) + 1440) % 1440; var h = Math.floor(min / 60); return (h < 12 ? '오전 ' : '오후 ') + (h % 12 || 12) + ':' + U.pad2(min % 60); };
   /* minutes since the trip started, for the screen the user is on right now */
   U.simOffset = function () {
     var T = App.data.trip, s = state.screen, total = U.tripTotal(), ph = Math.max(0, PHASES.indexOf(state.readerPhase || 'active'));
+    var sum = state.lastSummary; if ((s === 'end' || s === 'record' || s === 'result') && sum && sum.endMin != null) return sum.endMin - T.startMin;
     if (!state.journeyStarted) { var ls = state.lastSummary; return ls && (s === 'result' || s === 'end') && ls.endMin != null ? ls.endMin - T.startMin : 0; }
     if (s === 'millie' && state.readerTarget === 'transfer') return [4, 10, 15, 19, 21][ph];
     if (s === 'millie' || s === 'resume') { var base = T.transferAt + (state.transferStopped ? T.wait : 0); return base + Math.round((total - 2 - base) * [.1, .4, .65, .85, .95][ph]); }
@@ -256,7 +258,9 @@
 
   App.renderIsland = function () {
     var fn = App.islands[state.screen];
-    document.getElementById('island-layer').innerHTML = fn ? fn() : '';
+    var html = fn ? fn() : ''; document.getElementById('island-layer').innerHTML = html;
+    var dev = document.getElementById('device'); if (dev) dev.dataset.island = /class="isl-pill"/.test(html) ? 'pill' : '';
+    if ((state.screen === 'millie' || state.screen === 'resume') && App.sheets[state.screen]) document.getElementById('sheet-layer').innerHTML = App.sheets[state.screen]();
     App.updateClock();
   };
 

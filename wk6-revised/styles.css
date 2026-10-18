@@ -52,27 +52,44 @@ img { display: block; }
 .toast { position: absolute; left: 50%; bottom: 92px; z-index: 70; max-width: calc(100% - 40px); padding: 10px 16px; border-radius: 20px; background: #000; color: #fff; font-size: 14px; line-height: 21px; text-align: center; opacity: 0; transform: translate(-50%, 8px); transition: opacity .2s, transform .2s; pointer-events: none; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* dynamic island + live activity + notification banner (drawn above the status bar) */
+/* dynamic island + live activity + notification banner (drawn above the status bar).
+   Numbers come straight from the Figma "수정해야하는 프로토타입 화면들" frames (402 × 874). */
 #island-layer { position: absolute; inset: 0 0 auto; z-index: 62; height: 0; }
-.isl-pill { position: absolute; top: 12px; left: 50%; width: 196px; height: 36px; margin-left: -98px; display: flex; align-items: center; gap: 8px; padding: 7px 16px 7px 7px; border-radius: 32px; background: #000; color: #fff; font-size: 12px; line-height: 17px; text-align: left; }
+/* compact pill: 246 × 36, radius 32, padding 7, left group (22px dot + 5px gap + 13px label) / right 13px Medium */
+.isl-pill { position: absolute; top: 12px; left: 75px; width: 246px; height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 7px; border-radius: 32px; background: #000; color: #fff; font-size: 13px; line-height: 19px; text-align: left; }
+.isl-left { display: flex; align-items: center; gap: 5px; }
 .isl-dot { display: grid; place-items: center; flex: 0 0 22px; width: 22px; height: 22px; border-radius: 50%; background: var(--line); }
+.isl-dot.has-icon + .isl-label { margin-left: 1px; }
 .isl-dot img { width: 14px; height: 14px; }
-.isl-label { flex: 1; white-space: nowrap; }
-.isl-pill time { color: var(--soft); white-space: nowrap; }
-.isl-live { position: absolute; top: 12px; left: 20px; width: calc(100% - 40px); height: 144px; border-radius: 32px; background: #000; color: #fff; }
+.isl-label { font-weight: 400; white-space: nowrap; }
+.isl-right { font-weight: 500; white-space: nowrap; }
+/* transfer banner: 362 × 62, radius 31 — 40px icon circle, 16px Medium title, 12px sub line */
+.isl-banner { position: absolute; top: 10px; left: 20px; width: 362px; height: 62px; border-radius: 31px; background: #000; color: #fff; }
+.isl-banner-ico { position: absolute; left: 14px; top: 11px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--line); }
+.isl-banner-ico img { width: 24px; height: 24px; }
+.isl-banner strong { position: absolute; left: 66px; top: 10px; font-size: 16px; font-weight: 500; line-height: 23px; white-space: nowrap; }
+.isl-banner small { position: absolute; left: 66px; top: 33px; color: var(--soft); opacity: .8; font-size: 12px; line-height: 17px; white-space: nowrap; }
+/* Live Activity (expanded): 362 × 144, radius 32 */
+.isl-live { position: absolute; top: 12px; left: 20px; width: 362px; height: 144px; z-index: 1; border-radius: 32px; background: #000; color: #fff; }
 .isl-live-top { position: absolute; inset: 0 0 auto; height: 52px; font-size: 12px; line-height: 17px; }
 .isl-live-top i { position: absolute; left: 28px; top: 22px; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
 .isl-live-top span { position: absolute; left: 42px; top: 16px; }
-.isl-live-top time { position: absolute; right: 32px; top: 16px; color: var(--soft); }
+.isl-live-top time { position: absolute; right: 24px; top: 16px; color: var(--soft); }
 .isl-live .isl-logo { background: #fff; position: absolute; left: 24px; top: 60px; }
-.isl-live strong { position: absolute; left: 96px; top: 62px; font-size: 16px; font-weight: 500; line-height: 24px; }
+.isl-live strong { position: absolute; left: 96px; top: 62px; font-size: 16px; font-weight: 500; line-height: 24px; white-space: nowrap; }
 .isl-live small { position: absolute; left: 96px; top: 88px; color: var(--soft); font-size: 12px; line-height: 17px; }
+.isl-stop { position: absolute; right: 24px; top: 64px; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: #fff; }
+.isl-stop b { display: block; width: 16px; height: 16px; border-radius: 3px; background: #000; }
 .isl-backdrop { position: absolute; top: 0; left: 0; width: 100%; height: 874px; background: transparent; pointer-events: auto; cursor: default; }
-.isl-live { z-index: 1; }
-.isl-live .isl-remain { top: 107px; color: #fff; font-weight: 500; }
-.isl-stop { position: absolute; right: 20px; top: 62px; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px 0 12px; border-radius: 20px; background: #fff; color: #000; font-size: 13px; font-weight: 500; line-height: 20px; white-space: nowrap; }
-.isl-stop b { display: block; flex: 0 0 12px; width: 12px; height: 12px; border-radius: 2px; background: #000; }
+/* "다음 역에서 환승해요. 읽던 위치를 저장하고 잠시 멈출까요?" card: 362 × 163, radius 16, 1px #e0e0e0, padding 20, gap 12, bottom 65 */
+.isl-sheet { position: absolute; left: 20px; right: 20px; bottom: 65px; display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 16px; background: #fff; box-shadow: inset 0 0 0 1px #e0e0e0; pointer-events: auto; }
+.isl-sheet h3 { font-size: 22px; font-weight: 400; line-height: 26px; }
+.isl-sheet p { font-size: 16px; line-height: 19px; }
 #island-layer .notif { position: absolute; top: 70px; left: 20px; width: calc(100% - 40px); }
+/* while the compact pill is shown the status bar re-flows like the Figma frames: clock at the left edge, no Wi-Fi / location icon */
+.device[data-island="pill"] .sb-left { justify-content: flex-start; padding-left: 27px; }
+.device[data-island="pill"] .sb-left img, .device[data-island="pill"] .sb-wifi { display: none; }
+.device[data-island="pill"] .sb-right { justify-content: flex-end; padding-right: 20px; }
 
 /* ---------- 3. shared components ---------- */
 /* 밀리의 서재 mark: the first glyph of the services sprite, scaled so the circle fills the box. */

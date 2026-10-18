@@ -10,7 +10,7 @@
       account: 'services', favorites: 'login', placeAdd: 'favorites', activities: state.editingActivities ? 'home' : 'favorites', progress: 'activities', services: 'progress', serviceSearch: 'services', permissions: 'account',
       homePlace: 'home', departureNotice: 'home', route: state.journeyStarted ? 'activityStart' : 'home', routeConfirm: 'route', mapApps: 'route', journeyActivity: 'routeConfirm', activityStart: 'journeyActivity',
       readingLoading: 'activityStart', millie: 'activityStart', transferRecord: 'millie', transferSaved: 'transferRecord', lockScreen: 'transferSaved',
-      boardingNotice: 'lockScreen', resume: 'lockScreen', arrivalNotice: 'resume', arrival: 'resume', record: 'arrival', result: 'home', calendar: 'home', end: 'home'
+      boardingNotice: 'lockScreen', resume: 'lockScreen', arrivalNotice: 'resume', arrival: 'resume', end: 'arrival', record: 'end', result: 'home', calendar: 'home'
     };
     return prev[s] || 'home';
   }
@@ -105,7 +105,7 @@
   App.restartReaderClock = function () { clearTimeout(App.timers.reader); tick(); };
   App.hooks.render.push(function (screen) {
     clearTimeout(App.timers.flow);
-    if (onReader(screen)) { if (App.timers.readerScreen !== screen) { App.timers.readerScreen = screen; App.restartReaderClock(); } return; }
+    if (onReader(screen)) { if (App.timers.readerScreen !== screen) { App.timers.readerScreen = screen; App.islandT0 = Date.now(); App.restartReaderClock(); } return; }
     clearTimeout(App.timers.reader); App.timers.readerScreen = null;
     if (!AUTO) return;
     var delay = 0, next = null;
@@ -113,6 +113,13 @@
     else if (screen === 'arrivalNotice') { delay = 9000 / SPEED; next = function () { A['show-arrival-summary'](); }; }
     if (next) App.timers.flow = setTimeout(function () { if (state.screen === screen) next(); }, delay);
   });
+
+  /* the island's "12분 34초" runs in real seconds while the reading screen is open */
+  setInterval(function () {
+    if (!onReader(state.screen)) return;
+    var els = document.querySelectorAll('.isl-time'); if (!els.length) return;
+    var txt = App.islandElapsed(); els.forEach(function (el) { el.textContent = txt; });
+  }, 1000);
 
   /* ---------- keep the 402 × 874 frame fully visible on short desktop windows ---------- */
   if (params.get('bare') === '1') document.body.classList.add('bare'); // QA view: frame only, no workbench
