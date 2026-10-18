@@ -197,7 +197,7 @@
     App.profile = null; // QA jumps never overwrite stored profiles
     if (opts.fresh && App.data.protectedScreens.indexOf(target) >= 0) {
       state.onboardingCompleted = true; state.accountRegistered = true; state.selectedActivities = ['책 읽기']; state.departure = '집'; state.destination = '회사';
-      state.places = [{ kind: 'home', name: '집', address: '가온동' }, { kind: 'work', name: '회사', address: '세본동' }];
+      state.places = [{ kind: 'home', name: '집', address: '세본동' }, { kind: 'work', name: '회사', address: '강남역' }];
       state.progressItems.bookOn = true; state.progressItems.bookTitle = '데미안'; state.currentReadingPage = '120';
     }
     var journeyScreens = ['activityStart', 'readingLoading', 'millie', 'transferRecord', 'transferSaved', 'lockScreen', 'boardingNotice', 'resume', 'arrivalNotice', 'arrival', 'record', 'end'];

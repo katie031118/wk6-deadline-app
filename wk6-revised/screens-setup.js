@@ -8,12 +8,13 @@
   function base(content, cls) { return '<section class="screen-content legacy ' + (cls || '') + '">' + content + '</section>'; }
   function area(p) { return p ? U.areaOf(p.address || p.name) : ''; }
   var STEPS = App.data.setupSteps;
-  function steps(n) { var out = '<div class="step-track" aria-hidden="true">'; for (var i = 1; i <= STEPS.length; i++) out += '<i class="' + (i <= n ? 'on' : '') + '"></i>'; return out + '</div>'; }
-  /* Top bar = navigation only (back) + "n / 6 · step name". The primary action lives in the bottom CTA. */
+  /* Top bar (Figma "After · 단계 표시"): back chevron · one long segmented progress bar · "n / 6" right-aligned, numbers only.
+     The primary action lives in the bottom CTA. */
   function setupTop(n, backAction) {
-    var editing = n === 2 && state.editingActivities;
-    var label = editing ? '활동 수정' : n + ' / ' + STEPS.length + ' · ' + STEPS[n - 1];
-    return '<div class="source-setup-top"><button type="button" data-action="' + (backAction || 'back') + '">이전</button><div class="setup-progress" aria-label="설정 ' + STEPS.length + '단계 중 ' + n + '단계"><span>' + label + '</span>' + (editing ? '' : steps(n)) + '</div></div>';
+    var editing = n === 2 && state.editingActivities, bar = '';
+    for (var i = 1; i <= STEPS.length; i++) bar += '<i class="' + (i <= n ? 'on' : '') + '"></i>';
+    return '<div class="source-setup-top"><button type="button" class="setup-back" data-action="' + (backAction || 'back') + '" aria-label="이전"><img src="./assets/icons/route/imgVector4Stroke.svg" alt="" width="13" height="23"></button>' +
+      (editing ? '<span class="setup-bar-spacer"></span><span class="setup-count">활동 수정</span>' : '<div class="setup-bar" role="progressbar" aria-valuemin="1" aria-valuemax="' + STEPS.length + '" aria-valuenow="' + n + '" aria-label="설정 ' + STEPS.length + '단계 중 ' + n + '단계 (' + STEPS[n - 1] + ')">' + bar + '</div><span class="setup-count">' + n + ' / ' + STEPS.length + '</span>') + '</div>';
   }
   /* Primary CTA, always at the bottom of the screen. ready=false renders it as inactive (still tappable so the screen can explain what is missing). */
   function setupCta(label, action, ready) {
@@ -55,7 +56,7 @@
   };
   /* Add a place = pick the address (one tap, shows "선택됨") → "집으로 추가하기". Typing again clears the selection. */
   var KIND_NAME = { home: '집', work: '회사', custom: '장소' };
-  var KIND_DEFAULT = { home: '가온동', work: '세본동', custom: '' };
+  var KIND_DEFAULT = { home: '세본동', work: '강남역', custom: '' };
   function ctaLabel() { var k = state.pendingPlaceKind; return k === 'home' ? '집으로 추가하기' : k === 'work' ? '회사로 추가하기' : '장소로 추가하기'; }
   function addRow() {
     var d = (state.placeDraft || '').replace(/^서울특별시 /, '').trim(), on = !!state.placeSelected && !!d;
@@ -92,8 +93,8 @@
         '<input class="source-progress-name" data-bind="progressItems.' + titleKey + '" value="' + esc(p[titleKey]) + '" placeholder="' + placeholder + '" aria-label="' + title + ' 제목">' +
         '<div class="source-progress-position"><label for="progress-' + key + '">' + label + '</label><span><input id="progress-' + key + '" class="source-progress-' + key + '" data-bind="' + bind + '" value="' + esc(val) + '" placeholder="' + (unit ? '0' : '예) 와이어 프레임 수정') + '" ' + (unit ? 'type="number" min="0" inputmode="numeric"' : 'type="text"') + '>' + (unit ? '<span>' + unit + '</span>' : '') + '</span></div></div>';
     }
-    return base(setupTop(3) + '<div class="source-setup-heading"><h2>이미 진행 중인 활동이 있나요?</h2><p>이전에 하던 활동을 바로 이어갈 수 있도록 설정해 보세요.</p></div><div class="source-progress-list">' +
-      card('book', '책 읽기', 'imgBook4', 'bookTitle', '책 제목을 입력해 주세요.', '현재 읽는 위치', 'currentReadingPage', '쪽', 'root') +
+    return base(setupTop(3) + '<div class="source-setup-heading"><h2>읽던 책이나 활동을 등록해 주세요</h2><p>선택한 활동의 제목과 현재 위치를 입력해 주세요.<br>아직 없다면 \'건너뛰기\'를 눌러도 돼요.</p></div><div class="source-progress-list">' +
+      card('book', '책 읽기', 'imgBook4', 'bookTitle', '책 제목 · 필수   예: 데미안', '현재 읽고 있는 위치 · 선택', 'currentReadingPage', '쪽', 'root') +
       card('ott', 'OTT 보기', 'imgMovie', 'ottTitle', '콘텐츠 제목을 입력해 주세요.', '마지막으로 본 회차', 'ottEpisode', '화') +
       card('work', '업무 · 과제', 'imgTrip', 'workTitle', '과제명 또는 작업 내용을 입력해 주세요.', '마지막으로 한 내용', 'workLast', '') + '</div>' +
       setupCta(progressFilled() ? '다음' : '건너뛰기', 'to-services'), 'source-progress-screen has-cta');

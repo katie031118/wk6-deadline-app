@@ -16,7 +16,7 @@
     { key: 'ott', label: 'OTT 보기', options: [{ name: 'YouTube' }, { name: 'Netflix' }, { name: 'Coupang Play' }] },
     { key: 'work', label: '업무 · 과제', options: [] }
   ];
-  App.data.mockPlaces = ['가온동', '세본동', '서울역', '홍대입구역', '카페 온도'];
+  App.data.mockPlaces = ['세본동', '강남역', '서울역', '홍대입구역', '카페 온도'];
   App.data.setupScreens = ['account', 'favorites', 'placeAdd', 'activities', 'progress', 'services', 'serviceSearch', 'permissions'];
   App.data.protectedScreens = ['home', 'homePlace', 'route', 'routeConfirm', 'mapApps', 'journeyActivity', 'activityStart', 'readingLoading', 'millie', 'transferRecord', 'transferSaved', 'lockScreen', 'boardingNotice', 'resume', 'arrivalNotice', 'arrival', 'record', 'result', 'calendar', 'end', 'departureNotice'];
   /* Onboarding has six real steps; every screen shows "n / 6 · name" so the number always says what it counts. */
@@ -87,7 +87,7 @@
     s.isExistingUser = true; s.onboardingCompleted = true; s.accountRegistered = true;
     s.onboardingPlacesComplete = s.onboardingProgressComplete = s.onboardingServicesComplete = true;
     s.account = { nickname: '', email: 'nari@example.com', password: '', passwordConfirm: '' };
-    s.places = [{ kind: 'home', name: '집', address: '가온동' }, { kind: 'work', name: '회사', address: '세본동' }];
+    s.places = [{ kind: 'home', name: '집', address: '세본동' }, { kind: 'work', name: '회사', address: '강남역' }];
     s.departure = '집'; s.destination = '회사';
     s.selectedActivities = ['책 읽기']; s.selectedServices = ['밀리의 서재'];
     s.progressItems.bookOn = true; s.progressItems.bookTitle = '데미안'; s.currentReadingPage = '120';
